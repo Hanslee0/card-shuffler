@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카드 암기 테스트</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
+        .controls { position: sticky; top: 0; background: white; padding: 15px; text-align: center; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 0 0 15px 15px; }
+        #card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px; }
+        .card-item { background: white; border-radius: 10px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; transition: 0.3s; }
+        .card-item img { width: 100%; height: auto; border-radius: 5px; margin-bottom: 10px; }
+        .hidden img { filter: brightness(0) invert(0.9); } /* 카드 숨김 처리 */
+        
+        .input-area { margin-top: 10px; }
+        input { width: 80%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+        .correct { background-color: #d4edda !important; border: 2px solid #28a745; }
+        .wrong { background-color: #f8d7da !important; border: 2px solid #dc3545; }
+        
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; border-radius: 8px; border: none; font-weight: bold; transition: 0.2s; }
+        .btn-shuffle { background: #007bff; color: white; }
+        .btn-test { background: #6c757d; color: white; }
+        .btn-check { background: #28a745; color: white; }
+
+        @media (max-width: 480px) { #card-container { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <button class="btn-shuffle" onclick="renderDeck()">새로 섞기</button>
+        <button class="btn-test" onclick="toggleTest()">카드 숨기기/보이기</button>
+        <button class="btn-check" onclick="checkAnswers()">정답 확인</button>
+        <p id="score-display" style="margin: 10px 0 0; font-weight: bold; color: #333;"></p>
+    </div>
+
+    <div id="card-container"></div>
+
+    <script>
+        const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        let deck = [];
+        let currentShuffled = [];
+
+        for (let suit of suits) {
+            for (let rank of ranks) { deck.push(`${rank}_of_${suit}`); }
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function renderDeck() {
+            const container = document.getElementById('card-container');
+            container.innerHTML = '';
+            document.getElementById('score-display').innerText = '';
+            currentShuffled = shuffle([...deck]);
+
+            currentShuffled.forEach((card, index) => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card-item';
+                cardDiv.id = `card-${index}`;
+
+                const img = document.createElement('img');
+                img.src = `cards/${card}.png`;
+                
+                const inputDiv = document.createElement('div');
+                inputDiv.className = 'input-area';
+                inputDiv.innerHTML = `
+                    <small style="display:block; margin-bottom:5px;">${index + 1}번 장소</small>
+                    <input type="text" id="input-${index}" placeholder="예: A spades">
+                `;
+
+                cardDiv.appendChild(img);
+                cardDiv.appendChild(inputDiv);
+                container.appendChild(cardDiv);
+            });
+            window.scrollTo(0, 0);
+        }
+
+        function toggleTest() {
+            const items = document.querySelectorAll('.card-item');
+            items.forEach(item => item.classList.toggle('hidden'));
+        }
+
+        function checkAnswers() {
+            let score = 0;
+            currentShuffled.forEach((card, index) => {
+                const userInput = document.getElementById(`input-${index}`).value.toLowerCase().replace(/\s/g, '');
+                const answer = card.replace(/_of_/g, '').toLowerCase(); // 'a_of_spades' -> 'aspades'
+
+                const inputField = document.getElementById(`input-${index}`);
+                if (userInput === answer || userInput === card.replace(/_/g, '').toLowerCase()) {
+                    inputField.className = 'correct';
+                    score++;
+                } else {
+                    inputField.className = 'wrong';
+                }
+            });
+            document.getElementById('score-display').innerText = `결과: 52개 중 ${score}개 맞춤!`;
+            // 정답 확인 시 카드 다시 보이기
+            document.querySelectorAll('.card-item').forEach(item => item.classList.remove('hidden'));
+        }
+
+        renderDeck();
+    </script>
+</body>
+</html>
